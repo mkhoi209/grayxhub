@@ -17,7 +17,7 @@ local Window = Library:CreateWindow{
     MinSize = Vector2.new(470, 380),
     Acrylic = true,
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.RightControl
+    MinimizeKey = Enum.KeyCode.G
 }
 
 -- ==========================
@@ -292,3 +292,4 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 -- ==========================
 Library:Notify{Title="Grayx Hub", Content="Script đã được tải thành công!", Duration=8}
 Window:SelectTab(1)
+
