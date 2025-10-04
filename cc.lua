@@ -271,7 +271,7 @@ local InfoParagraph = InfoSection:CreateParagraph("Update Info", {
 - Thêm tính năng Teleport Wander Prison
 - Thêm FPS Boost / Low Graphics
 -  tính năng Auto Buy, Equip Best, Player Options
-- Config vẫn lưu trữ thông tin toggle và slider
+- Config và theme đổi màu
 ]]
 })
 
@@ -292,4 +292,5 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 -- ==========================
 Library:Notify{Title="Grayx Hub", Content="Script đã được tải thành công!", Duration=8}
 Window:SelectTab(1)
+
 
