@@ -1,23 +1,26 @@
 -- ======================================
--- Grayx Hub Full Version (Fluent-Renewed)
+-- Grayx Hub Full Version + FPS Boost
 -- ======================================
 
--- Load Fluent-Renewed UI
+-- Load Libraries
 local Library = loadstring(game:HttpGetAsync("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+local SaveManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
+local InterfaceManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"))()
 
 -- Create Window
 local Window = Library:CreateWindow{
     Title = "Grayx Hub",
     SubTitle = "Plant Vs Brainrot",
     TabWidth = 160,
-    Size = UDim2.fromOffset(650, 600),
+    Size = UDim2.fromOffset(830, 525),
     Resize = true,
-    MinSize = Vector2.new(470, 420),
+    MinSize = Vector2.new(470, 380),
     Acrylic = true,
     Theme = "Dark",
     MinimizeKey = Enum.KeyCode.G
 }
 
+-- Services
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -26,7 +29,10 @@ local RootPart = Character:WaitForChild("HumanoidRootPart")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+local VirtualUser = game:GetService("VirtualUser")
 local HttpService = game:GetService("HttpService")
+local Lighting = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
 
 -- ==========================
 -- Variables
@@ -35,6 +41,24 @@ local selectedPlants = {}
 local interval = 60
 local speed = 16
 local flySpeed = 50
+local autoBuyItems = {
+    ["Water Bucket"] = false,
+    ["Frost Grenade"] = false,
+    ["Banana Gun"] = false,
+    ["Frost Blower"] = false,
+    ["Carrot Launcher"] = false
+}
+
+-- ==========================
+-- Tabs
+-- ==========================
+local Tabs = {
+    Main = Window:CreateTab{ Title = "Main", Icon = "phosphor-users-bold" },
+    Player = Window:CreateTab{ Title = "Player", Icon = "user" },
+    ItemsTab = Window:CreateTab{ Title = "Items", Icon = "shopping-cart" },
+    Extra = Window:CreateTab{ Title = "Extras", Icon = "lightning" },
+    Settings = Window:CreateTab{ Title = "Settings", Icon = "settings" }
+}
 
 -- ==========================
 -- Helper Functions
@@ -48,273 +72,61 @@ local function buyPlant(plantName, quantity)
 end
 
 -- ==========================
--- Tabs
+-- Main Tab
 -- ==========================
-local Tabs = {
-    Main = Window:CreateTab{ Title = "Main", Icon = "users-bold" },
-    Player = Window:CreateTab{ Title = "Player", Icon = "user" },
-    ItemsTab = Window:CreateTab{ Title = "Items", Icon = "shopping-cart" }
-}
--- =====================================
--- Main Tab: Boots FPS (Tối ưu đồ họa)
--- =====================================
-local BootsFPSToggle = Tabs.Main:CreateSection("Extras / FPS"):CreateToggle("Boots FPS", {
-    Title = "Boots FPS",
-    Description = "Giảm đồ họa game để tăng FPS",
-    Default = false
-})
-
--- Lưu trạng thái gốc
-local _originalLighting = nil
-local _originalParts = {}       -- [instance] = {Material, Reflectance, CastShadow, Transparency}
-local _originalEffects = {}     -- [instance] = {Enabled/Transparency}
-local _bootsActive = false
-
--- Lưu trạng thái Lighting
-local function saveLightingState()
-    local Lighting = game:GetService("Lighting")
-    _originalLighting = {
-        GlobalShadows = Lighting.GlobalShadows,
-        FogEnd = Lighting.FogEnd,
-        FogStart = Lighting.FogStart,
-        Brightness = Lighting.Brightness,
-        Ambient = Lighting.Ambient,
-        OutdoorAmbient = Lighting.OutdoorAmbient,
-        Technology = Lighting.Technology
-    }
-end
-
--- Áp dụng đồ họa thấp
-local function applyLowGraphics()
-    if _bootsActive then return end
-    _bootsActive = true
-    saveLightingState()
-
-    local Lighting = game:GetService("Lighting")
-    Lighting.GlobalShadows = false
-    Lighting.FogStart = 0
-    Lighting.FogEnd = 1000
-    Lighting.Brightness = 2
-    Lighting.Ambient = Color3.fromRGB(200,200,200)
-    Lighting.OutdoorAmbient = Color3.fromRGB(200,200,200)
-
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            if not _originalParts[obj] then
-                _originalParts[obj] = {
-                    Material = obj.Material,
-                    Reflectance = obj.Reflectance,
-                    CastShadow = obj.CastShadow,
-                    Transparency = obj.Transparency
-                }
-            end
-            pcall(function()
-                obj.Material = Enum.Material.Plastic
-                obj.Reflectance = 0
-                obj.CastShadow = false
-            end)
-        elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or
-               obj:IsA("PointLight") or obj:IsA("SurfaceLight") or obj:IsA("SpotLight") then
-            if not _originalEffects[obj] then
-                _originalEffects[obj] = { Enabled = obj.Enabled ~= false }
-            end
-            pcall(function() obj.Enabled = false end)
-        elseif obj:IsA("Decal") or obj:IsA("Texture") then
-            if not _originalEffects[obj] then
-                _originalEffects[obj] = { Transparency = obj.Transparency }
-            end
-            pcall(function() obj.Transparency = 1 end)
-        end
-    end
-end
-
--- Khôi phục đồ họa
-local function restoreGraphics()
-    if not _bootsActive then return end
-    _bootsActive = false
-
-    local Lighting = game:GetService("Lighting")
-    if _originalLighting then
-        for k,v in pairs(_originalLighting) do
-            Lighting[k] = v
-        end
-    end
-
-    for obj,props in pairs(_originalParts) do
-        if obj and obj.Parent then
-            pcall(function()
-                obj.Material = props.Material
-                obj.Reflectance = props.Reflectance
-                obj.CastShadow = props.CastShadow
-                obj.Transparency = props.Transparency
-            end)
-        end
-    end
-
-    for obj,props in pairs(_originalEffects) do
-        if obj and obj.Parent then
-            pcall(function()
-                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or
-                   obj:IsA("PointLight") or obj:IsA("SurfaceLight") or obj:IsA("SpotLight") then
-                    obj.Enabled = props.Enabled
-                elseif obj:IsA("Decal") or obj:IsA("Texture") then
-                    obj.Transparency = props.Transparency
-                end
-            end)
-        end
-    end
-end
-
-BootsFPSToggle:OnChanged(function(state)
-    if state then
-        applyLowGraphics()
-    else
-        restoreGraphics()
-    end
-end)
-
-
-
-local ItemsSection = Tabs.ItemsTab:CreateSection("Buy Gear / Items")
-
--- Danh sách item để auto mua
-local autoBuyItems = {
-    ["Water Bucket"] = false,
-    ["Frost Grenade"] = false,
-    ["Banana Gun"] = false,
-    ["Frost Blower"] = false,
-    ["Carrot Launcher"] = false
-}
-
--- Thời gian giữa mỗi lần mua (giây)
-local buyInterval = 1
-
--- Tạo toggle cho từng item
-for itemName, _ in pairs(autoBuyItems) do
-    local toggle = ItemsSection:CreateToggle(itemName, {
-        Title = "Auto Buy "..itemName,
-        Description = "Tự động mua "..itemName.." mỗi "..buyInterval.."s",
-        Default = false
-    })
-
-    toggle:OnChanged(function(state)
-        autoBuyItems[itemName] = state
-    end)
-end
-
--- Vòng lặp chung để mua tất cả item được bật xen kẽ
-spawn(function()
-    while true do
-        for itemName, isEnabled in pairs(autoBuyItems) do
-            if isEnabled then
-                local args = {itemName}
-                local success, err = pcall(function()
-                    Remotes:WaitForChild("BuyGear"):FireServer(unpack(args))
-                end)
-                if not success then
-                    warn("Không thể mua "..itemName..":", err)
-                end
-                task.wait(buyInterval)
-            end
-        end
-        task.wait(0.1) -- delay nhỏ giữa vòng lặp
-    end
-end)
-
-
-
-local AntiAFKSection = Tabs.Player:CreateSection("Anti AFK")
-local AntiAFKToggle = AntiAFKSection:CreateToggle("Anti AFK", {
-    Title = "Anti AFK",
-    Description = "Tự động tránh bị AFK",
-    Default = true
-})
-
-local VirtualUser = game:GetService("VirtualUser")
-
-AntiAFKToggle:OnChanged(function(state)
-    if state then
-        LocalPlayer.Idled:Connect(function()
-            if AntiAFKToggle.Value then
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end
-        end)
-    end
-end)
-
--- =====================================
--- Main Tab: Auto Buy Plants + Equip Best
--- =====================================
-local PlantSection = Tabs.Main:CreateSection("Auto Buy Plants")
-local ExtraSection = Tabs.Main:CreateSection("Extras / Equip")
+local MainSection = Tabs.Main:CreateSection("Auto Buy Plants")
+local ExtraSection = Tabs.Extra:CreateSection("Extras / Equip / FPS Boost")
 
 local Plants = {
     "Cactus Seed", "Strawberry Seed", "Pumpkin Seed", "Sunflower Seed",
     "Dragon Fruit Seed", "Eggplant Seed", "Watermelon Seed", "Grape Seed",
     "Cocotank Seed", "Carnivorous Plant Seed", "Mr Carrot Seed", "Tomatrio Seed",
-    "Shroombino Seed", "Mango Seend"
+    "Shroombino Seed", "Mango Seed"
 }
 
-local PlantDropdown = PlantSection:CreateDropdown("Select Plants", {
+-- Plant Selection Dropdown
+local PlantDropdown = MainSection:CreateDropdown("Select Plants", {
     Title = "Plants",
     Description = "Chọn nhiều loại cây để mua",
     Values = Plants,
     Multi = true,
     Default = {}
 })
-
 PlantDropdown:OnChanged(function(Value)
     selectedPlants = {}
     for plant, state in pairs(Value) do
-        if state then
-            selectedPlants[plant] = true
-        end
+        if state then selectedPlants[plant] = true end
     end
 end)
 
-local PlantToggle = PlantSection:CreateToggle("Auto Buy Plants", {
+-- Auto Buy Plants Toggle
+local PlantToggle = MainSection:CreateToggle("Auto Buy Plants", {
     Title = "Auto Buy Plants",
     Description = "Tự động mua tất cả cây đã chọn",
     Default = false
 })
-
 PlantToggle:OnChanged(function(state)
     if state then
         spawn(function()
             while PlantToggle.Value do
                 local plantsList = {}
-                for plant,_ in pairs(selectedPlants) do
-                    table.insert(plantsList, plant)
-                end
+                for plant,_ in pairs(selectedPlants) do table.insert(plantsList, plant) end
+                if #plantsList == 0 then task.wait(0.1) continue end
 
-                if #plantsList == 0 then
-                    task.wait(0.1)
-                    continue
-                end
-
-                local plant = plantsList[math.random(1, #plantsList)]
-
+                local plant = plantsList[math.random(1,#plantsList)]
                 local success = false
-                for i = 1, 5 do
-                    if buyPlant(plant, 3) then
-                        success = true
-                        break
-                    end
+                for i=1,5 do
+                    if buyPlant(plant,3) then success = true break end
                     task.wait(0.01)
                 end
-
-                if not success then
-                    warn("Không thể mua cây: "..plant)
-                end
-
+                if not success then warn("Không thể mua cây: "..plant) end
                 task.wait(0.01)
             end
         end)
     end
 end)
 
--- Slider Interval Equip Best
+-- Equip Best Slider & Toggle
 local EquipSlider = ExtraSection:CreateSlider("Interval", {
     Title = "Interval (s)",
     Description = "Khoảng thời gian giữa mỗi Equip Best",
@@ -323,11 +135,8 @@ local EquipSlider = ExtraSection:CreateSlider("Interval", {
     Default = interval,
     Rounding = 1
 })
-EquipSlider:OnChanged(function(val)
-    interval = val
-end)
+EquipSlider:OnChanged(function(val) interval = val end)
 
--- Toggle Equip Best
 local EquipToggle = ExtraSection:CreateToggle("Equip Best Toggle", {
     Title = "Get Money & Equip Best",
     Description = "Mỗi interval, thực hiện EquipBestBrainrots",
@@ -337,160 +146,101 @@ EquipToggle:OnChanged(function(state)
     if state then
         spawn(function()
             while EquipToggle.Value do
-                pcall(function()
-                    Remotes:WaitForChild("EquipBestBrainrots"):FireServer()
-                end)
-                wait(interval)
+                pcall(function() Remotes:WaitForChild("EquipBestBrainrots"):FireServer() end)
+                task.wait(interval)
             end
         end)
     end
 end)
 
--- =====================================
--- Player Tab: ESP, Speed, Jump, NoClip, Fly
--- =====================================
-local PlayerSection = Tabs.Player:CreateSection("Player Options")
-
--- ESP
-local ESPToggle = PlayerSection:CreateToggle("ESP Players", {
-    Title = "ESP Players",
-    Description = "Hiển thị ESP cho tất cả người chơi",
-    Default = false
-})
-
-local espObjects = {}
-
-local function createESP(player)
-    local char = player.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        local root = char.HumanoidRootPart
-
-        local box = Instance.new("BoxHandleAdornment")
-        box.Adornee = root
-        box.Size = Vector3.new(2,5,1)
-        box.Color3 = Color3.fromRGB(255,0,0)
-        box.Transparency = 0.5
-        box.AlwaysOnTop = true
-        box.Parent = workspace
-
-        local bill = Instance.new("BillboardGui")
-        bill.Adornee = root
-        bill.Size = UDim2.new(0,100,0,50)
-        bill.StudsOffset = Vector3.new(0,3,0)
-        bill.AlwaysOnTop = true
-        bill.Parent = root
-
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1,0,1,0)
-        label.BackgroundTransparency = 1
-        label.Text = player.Name
-        label.TextColor3 = Color3.fromRGB(255,255,255)
-        label.TextStrokeTransparency = 0
-        label.TextScaled = true
-        label.Parent = bill
-
-        espObjects[player] = {Box = box, NameTag = bill}
-    end
+-- ==========================
+-- Items Tab: Auto Buy Gear
+-- ==========================
+local ItemsSection = Tabs.ItemsTab:CreateSection("Buy Gear / Items")
+for itemName,_ in pairs(autoBuyItems) do
+    local toggle = ItemsSection:CreateToggle(itemName, {
+        Title = "Auto Buy "..itemName,
+        Description = "Tự động mua "..itemName.." mỗi 1s",
+        Default = false
+    })
+    toggle:OnChanged(function(state) autoBuyItems[itemName] = state end)
 end
-
-local function removeESP(player)
-    if espObjects[player] then
-        if espObjects[player].Box then espObjects[player].Box:Destroy() end
-        if espObjects[player].NameTag then espObjects[player].NameTag:Destroy() end
-        espObjects[player] = nil
-    end
-end
-
-ESPToggle:OnChanged(function(state)
-    if state then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer then
-                createESP(player)
-                player.CharacterAdded:Connect(function()
-                    if ESPToggle.Value then
-                        task.wait(0.1)
-                        createESP(player)
-                    end
-                end)
+spawn(function()
+    while true do
+        for itemName, isEnabled in pairs(autoBuyItems) do
+            if isEnabled then
+                pcall(function() Remotes:WaitForChild("BuyGear"):FireServer(itemName) end)
+                task.wait(1)
             end
         end
-    else
-        for player,_ in pairs(espObjects) do
-            removeESP(player)
-        end
+        task.wait(0.1)
     end
 end)
 
-Players.PlayerRemoving:Connect(function(player)
-    removeESP(player)
+-- ==========================
+-- Player Tab
+-- ==========================
+local PlayerSection = Tabs.Player:CreateSection("Player Options")
+
+-- Anti AFK
+local AntiAFKToggle = PlayerSection:CreateToggle("Anti AFK", {
+    Title = "Anti AFK", Description = "Tự động tránh bị AFK", Default = true
+})
+AntiAFKToggle:OnChanged(function(state)
+    if state then
+        LocalPlayer.Idled:Connect(function() 
+            if AntiAFKToggle.Value then
+                VirtualUser:CaptureController() VirtualUser:ClickButton2(Vector2.new()) 
+            end
+        end)
+    end
 end)
 
--- Speed Slider
+-- WalkSpeed Slider
 local SpeedSlider = PlayerSection:CreateSlider("WalkSpeed", {
-    Title = "Speed",
-    Description = "Điều chỉnh tốc độ người chơi",
-    Min = 16,
-    Max = 500,
-    Default = speed,
-    Rounding = 1
+    Title = "Speed", Description = "Điều chỉnh tốc độ người chơi", Min = 16, Max = 500, Default = speed, Rounding = 1
 })
 SpeedSlider:OnChanged(function(val)
     speed = val
-    if Humanoid then
-        Humanoid.WalkSpeed = speed
-    end
+    if Humanoid then Humanoid.WalkSpeed = speed end
 end)
 
 -- Infinite Jump
 local JumpToggle = PlayerSection:CreateToggle("Infinite Jump", {
-    Title = "Jump Inf",
-    Description = "Nhảy vô hạn",
-    Default = false
+    Title = "Jump Inf", Description = "Nhảy vô hạn", Default = false
 })
 JumpToggle:OnChanged(function(state)
     if state then
         game:GetService("UserInputService").JumpRequest:Connect(function()
-            if JumpToggle.Value then
-                Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            end
+            if JumpToggle.Value then Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end
         end)
     end
 end)
 
 -- NoClip + Anti Void
 local NoClipToggle = PlayerSection:CreateToggle("NoClip + Anti Void", {
-    Title = "NoClip & Anti Void",
-    Description = "Đi xuyên vật thể và tránh rơi",
-    Default = false
+    Title = "NoClip & Anti Void", Description = "Đi xuyên vật thể và tránh rơi", Default = false
 })
 NoClipToggle:OnChanged(function(state)
     spawn(function()
         while NoClipToggle.Value do
             if Humanoid and RootPart then
                 for _, part in pairs(Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
+                    if part:IsA("BasePart") then part.CanCollide = false end
                 end
-                if RootPart.Position.Y < -50 then
-                    RootPart.CFrame = CFrame.new(0,50,0)
-                end
+                if RootPart.Position.Y < -50 then RootPart.CFrame = CFrame.new(0,50,0) end
             end
             RunService.Stepped:Wait()
         end
         for _, part in pairs(Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = true
-            end
+            if part:IsA("BasePart") then part.CanCollide = true end
         end
     end)
 end)
 
 -- Fly
 local FlyToggle = PlayerSection:CreateToggle("Fly", {
-    Title = "Fly",
-    Description = "Bay lên/xuống",
-    Default = false
+    Title = "Fly", Description = "Bay lên/xuống", Default = false
 })
 local flyBodyVelocity
 FlyToggle:OnChanged(function(state)
@@ -510,52 +260,85 @@ FlyToggle:OnChanged(function(state)
                 if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + workspace.CurrentCamera.CFrame.RightVector end
                 if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
                 if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0,1,0) end
-                if moveDir.Magnitude > 0 then
-                    flyBodyVelocity.Velocity = moveDir.Unit * flySpeed
-                else
-                    flyBodyVelocity.Velocity = Vector3.new(0,0,0)
-                end
+                if moveDir.Magnitude > 0 then flyBodyVelocity.Velocity = moveDir.Unit * flySpeed else flyBodyVelocity.Velocity = Vector3.new(0,0,0) end
             else
-                if flyBodyVelocity then
-                    flyBodyVelocity:Destroy()
-                    flyBodyVelocity = nil
-                end
+                if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity=nil end
             end
         end)
     else
-        if flyBodyVelocity then
-            flyBodyVelocity:Destroy()
-            flyBodyVelocity = nil
-        end
+        if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity=nil end
     end
 end)
--- Teleport Wander Prison
+
+-- Teleport Wander Prison liên tục
 local WanderPrisonToggle = PlayerSection:CreateToggle("Teleport Wander Prison", {
-    Title = "Teleport Wander Prison",
-    Description = "Teleport đến Wander Prison",
+    Title = "Teleport Wander Prison", Description = "Teleport đến Wander Prison liên tục", Default = false
+})
+local WanderPrisonPosition = Vector3.new(-173.44, 12.49, 999.06)
+WanderPrisonToggle:OnChanged(function(state)
+    if state then
+        spawn(function()
+            while WanderPrisonToggle.Value do
+                if RootPart then RootPart.CFrame = CFrame.new(WanderPrisonPosition) end
+                task.wait(0.5)
+            end
+        end)
+    end
+end)
+
+-- ==========================
+-- Extras Tab: FPS Boost
+-- ==========================
+local FPSSection = Tabs.Extra:CreateSection("FPS Boost / Low Graphics")
+
+local FPSBoostToggle = FPSSection:CreateToggle("FPS Boost", {
+    Title = "FPS Boost",
+    Description = "Tối ưu đồ họa để tăng FPS",
     Default = false
 })
 
-local WanderPrisonPosition = Vector3.new(-173.44, 12.49, 999.06)
-
-WanderPrisonToggle:OnChanged(function(state)
+FPSBoostToggle:OnChanged(function(state)
     if state then
-        if RootPart then
-            RootPart.CFrame = CFrame.new(WanderPrisonPosition)
-            print("Đã teleport đến Wander Prison")
+        -- Disable Lighting Effects
+        pcall(function()
+            Lighting.GlobalShadows = false
+            Lighting.FogEnd = 9e9
+            Lighting.Brightness = 0
+        end)
+        -- Remove decals/textures
+        for _,obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("Decal") or obj:IsA("Texture") then
+                obj:Destroy()
+            end
         end
-        -- Tắt toggle ngay sau khi teleport nếu muốn chỉ teleport 1 lần
-        task.wait(0.1)
-        WanderPrisonToggle:Set(false)
+        -- Lower quality of parts
+        for _,part in pairs(Workspace:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Material = Enum.Material.Plastic
+                part.Reflectance = 0
+            end
+        end
+    else
+        -- Reload the game to restore graphics fully
+        warn("Tắt FPS Boost: khuyến nghị reload lại để khôi phục")
     end
 end)
 
+-- ==========================
+-- SaveManager & InterfaceManager
+-- ==========================
+SaveManager:SetLibrary(Library)
+InterfaceManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+InterfaceManager:SetFolder("FluentScriptHub")
+SaveManager:SetFolder("FluentScriptHub/specific-game")
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+SaveManager:LoadAutoloadConfig()
 
-
-
+-- ==========================
+-- Notifications
+-- ==========================
+Library:Notify{Title="Grayx Hub",Content="Script đã được tải thành công!",Duration=8}
 Window:SelectTab(1)
-Library:Notify{
-    Title = "Auto Hub Loaded",
-    Content = "Grayx Hub đã sẵn sàng!",
-    Duration = 4
-}
+print("Grayx Hub loaded with FPS Boost support!")
