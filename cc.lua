@@ -1,5 +1,5 @@
 -- ======================================
--- Grayx Hub Full Version + FPS Boost
+-- Grayx Hub Full Version (With Config + Info Tab)
 -- ======================================
 
 -- Load Libraries
@@ -17,10 +17,12 @@ local Window = Library:CreateWindow{
     MinSize = Vector2.new(470, 380),
     Acrylic = true,
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.G
+    MinimizeKey = Enum.KeyCode.RightControl
 }
 
--- Services
+-- ==========================
+-- Services & Player
+-- ==========================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -30,9 +32,8 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local VirtualUser = game:GetService("VirtualUser")
-local HttpService = game:GetService("HttpService")
-local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
 
 -- ==========================
 -- Variables
@@ -53,23 +54,13 @@ local autoBuyItems = {
 -- Tabs
 -- ==========================
 local Tabs = {
+    Info = Window:CreateTab{ Title = "Info", Icon = "info" },
     Main = Window:CreateTab{ Title = "Main", Icon = "phosphor-users-bold" },
     Player = Window:CreateTab{ Title = "Player", Icon = "user" },
     ItemsTab = Window:CreateTab{ Title = "Items", Icon = "shopping-cart" },
-    Extra = Window:CreateTab{ Title = "Extras", Icon = "lightning" },
+    Extra = Window:CreateTab{ Title = "Extras", Icon = "ufo" },
     Settings = Window:CreateTab{ Title = "Settings", Icon = "settings" }
 }
-
--- ==========================
--- Helper Functions
--- ==========================
-local function buyPlant(plantName, quantity)
-    local success, err = pcall(function()
-        local remote = Remotes:WaitForChild("BuyItem")
-        remote:FireServer(plantName, quantity)
-    end)
-    return success
-end
 
 -- ==========================
 -- Main Tab
@@ -84,7 +75,6 @@ local Plants = {
     "Shroombino Seed", "Mango Seed"
 }
 
--- Plant Selection Dropdown
 local PlantDropdown = MainSection:CreateDropdown("Select Plants", {
     Title = "Plants",
     Description = "Chọn nhiều loại cây để mua",
@@ -99,7 +89,6 @@ PlantDropdown:OnChanged(function(Value)
     end
 end)
 
--- Auto Buy Plants Toggle
 local PlantToggle = MainSection:CreateToggle("Auto Buy Plants", {
     Title = "Auto Buy Plants",
     Description = "Tự động mua tất cả cây đã chọn",
@@ -116,7 +105,7 @@ PlantToggle:OnChanged(function(state)
                 local plant = plantsList[math.random(1,#plantsList)]
                 local success = false
                 for i=1,5 do
-                    if buyPlant(plant,3) then success = true break end
+                    if pcall(function() Remotes:WaitForChild("BuyItem"):FireServer(plant,3) end) then success = true break end
                     task.wait(0.01)
                 end
                 if not success then warn("Không thể mua cây: "..plant) end
@@ -170,10 +159,10 @@ spawn(function()
         for itemName, isEnabled in pairs(autoBuyItems) do
             if isEnabled then
                 pcall(function() Remotes:WaitForChild("BuyGear"):FireServer(itemName) end)
-                task.wait(1)
+                task.wait(0.01)
             end
         end
-        task.wait(0.1)
+        task.wait(0.01)
     end
 end)
 
@@ -182,10 +171,7 @@ end)
 -- ==========================
 local PlayerSection = Tabs.Player:CreateSection("Player Options")
 
--- Anti AFK
-local AntiAFKToggle = PlayerSection:CreateToggle("Anti AFK", {
-    Title = "Anti AFK", Description = "Tự động tránh bị AFK", Default = true
-})
+local AntiAFKToggle = PlayerSection:CreateToggle("Anti AFK", {Title="Anti AFK", Description="Tự động tránh bị AFK", Default=true})
 AntiAFKToggle:OnChanged(function(state)
     if state then
         LocalPlayer.Idled:Connect(function() 
@@ -196,19 +182,13 @@ AntiAFKToggle:OnChanged(function(state)
     end
 end)
 
--- WalkSpeed Slider
-local SpeedSlider = PlayerSection:CreateSlider("WalkSpeed", {
-    Title = "Speed", Description = "Điều chỉnh tốc độ người chơi", Min = 16, Max = 500, Default = speed, Rounding = 1
-})
+local SpeedSlider = PlayerSection:CreateSlider("WalkSpeed", {Title="Speed", Description="Điều chỉnh tốc độ người chơi", Min=16, Max=500, Default=speed, Rounding=1})
 SpeedSlider:OnChanged(function(val)
     speed = val
     if Humanoid then Humanoid.WalkSpeed = speed end
 end)
 
--- Infinite Jump
-local JumpToggle = PlayerSection:CreateToggle("Infinite Jump", {
-    Title = "Jump Inf", Description = "Nhảy vô hạn", Default = false
-})
+local JumpToggle = PlayerSection:CreateToggle("Infinite Jump", {Title="Jump Inf", Description="Nhảy vô hạn", Default=false})
 JumpToggle:OnChanged(function(state)
     if state then
         game:GetService("UserInputService").JumpRequest:Connect(function()
@@ -217,10 +197,7 @@ JumpToggle:OnChanged(function(state)
     end
 end)
 
--- NoClip + Anti Void
-local NoClipToggle = PlayerSection:CreateToggle("NoClip + Anti Void", {
-    Title = "NoClip & Anti Void", Description = "Đi xuyên vật thể và tránh rơi", Default = false
-})
+local NoClipToggle = PlayerSection:CreateToggle("NoClip + Anti Void", {Title="NoClip & Anti Void", Description="Đi xuyên vật thể và tránh rơi", Default=false})
 NoClipToggle:OnChanged(function(state)
     spawn(function()
         while NoClipToggle.Value do
@@ -239,9 +216,7 @@ NoClipToggle:OnChanged(function(state)
 end)
 
 -- Fly
-local FlyToggle = PlayerSection:CreateToggle("Fly", {
-    Title = "Fly", Description = "Bay lên/xuống", Default = false
-})
+local FlyToggle = PlayerSection:CreateToggle("Fly", {Title="Fly", Description="Bay lên/xuống", Default=false})
 local flyBodyVelocity
 FlyToggle:OnChanged(function(state)
     if state then
@@ -271,9 +246,7 @@ FlyToggle:OnChanged(function(state)
 end)
 
 -- Teleport Wander Prison liên tục
-local WanderPrisonToggle = PlayerSection:CreateToggle("Teleport Wander Prison", {
-    Title = "Teleport Wander Prison", Description = "Teleport đến Wander Prison liên tục", Default = false
-})
+local WanderPrisonToggle = PlayerSection:CreateToggle("Teleport Wander Prison", {Title="Teleport Wander Prison", Description="Teleport đến Wander Prison liên tục", Default=false})
 local WanderPrisonPosition = Vector3.new(-173.44, 12.49, 999.06)
 WanderPrisonToggle:OnChanged(function(state)
     if state then
@@ -287,58 +260,35 @@ WanderPrisonToggle:OnChanged(function(state)
 end)
 
 -- ==========================
--- Extras Tab: FPS Boost
+-- Info Tab
 -- ==========================
-local FPSSection = Tabs.Extra:CreateSection("FPS Boost / Low Graphics")
+local InfoSection = Tabs.Info:CreateSection("Update Info")
 
-local FPSBoostToggle = FPSSection:CreateToggle("FPS Boost", {
-    Title = "FPS Boost",
-    Description = "Tối ưu đồ họa để tăng FPS",
-    Default = false
+local InfoParagraph = InfoSection:CreateParagraph("Update Info", {
+    Title = "Thông tin cập nhật",
+    Content = [[
+- Phiên bản mới nhất: Grayx Hub v1.2
+- Thêm tính năng Teleport Wander Prison
+- Thêm FPS Boost / Low Graphics
+-  tính năng Auto Buy, Equip Best, Player Options
+- Config vẫn lưu trữ thông tin toggle và slider
+]]
 })
 
-FPSBoostToggle:OnChanged(function(state)
-    if state then
-        -- Disable Lighting Effects
-        pcall(function()
-            Lighting.GlobalShadows = false
-            Lighting.FogEnd = 9e9
-            Lighting.Brightness = 0
-        end)
-        -- Remove decals/textures
-        for _,obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("Decal") or obj:IsA("Texture") then
-                obj:Destroy()
-            end
-        end
-        -- Lower quality of parts
-        for _,part in pairs(Workspace:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.Plastic
-                part.Reflectance = 0
-            end
-        end
-    else
-        -- Reload the game to restore graphics fully
-        warn("Tắt FPS Boost: khuyến nghị reload lại để khôi phục")
-    end
-end)
-
 -- ==========================
--- SaveManager & InterfaceManager
+-- Settings Tab
 -- ==========================
 SaveManager:SetLibrary(Library)
 InterfaceManager:SetLibrary(Library)
 SaveManager:IgnoreThemeSettings()
-InterfaceManager:SetFolder("FluentScriptHub")
-SaveManager:SetFolder("FluentScriptHub/specific-game")
+SaveManager:SetIgnoreIndexes{}
+InterfaceManager:SetFolder("GrayxHub")
+SaveManager:SetFolder("GrayxHub/specific-game")
 InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)
-SaveManager:LoadAutoloadConfig()
 
 -- ==========================
--- Notifications
+-- Notification
 -- ==========================
-Library:Notify{Title="Grayx Hub",Content="Script đã được tải thành công!",Duration=8}
+Library:Notify{Title="Grayx Hub", Content="Script đã được tải thành công!", Duration=8}
 Window:SelectTab(1)
-print("Grayx Hub loaded with FPS Boost support!")
