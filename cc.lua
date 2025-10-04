@@ -12,7 +12,7 @@ local Window = Library:CreateWindow{
     Title = "Grayx Hub",
     SubTitle = "Plant Vs Brainrot",
     TabWidth = 160,
-    Size = UDim2.fromOffset(830, 525),
+    Size = UDim2.fromOffset(650, 525),
     Resize = true,
     MinSize = Vector2.new(470, 380),
     Acrylic = true,
@@ -292,5 +292,6 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 -- ==========================
 Library:Notify{Title="Grayx Hub", Content="Script đã được tải thành công!", Duration=8}
 Window:SelectTab(1)
+
 
 
