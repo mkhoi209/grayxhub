@@ -345,7 +345,7 @@ local InfoParagraph = InfoSection:CreateParagraph("Update Info", {
 local QualitySlider = GraphicsSection:CreateSlider("GraphicsQuality", {
     Title = "Graphics Quality",
     Description = "Điều chỉnh chất lượng đồ họa (0 = thấp, 10 = cao)",
-    Min = 10,
+    Min = 1,
     Max = 20,
     Default = settings().Rendering.QualityLevel,
     Rounding = 1
@@ -400,5 +400,6 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 -- ==========================
 Library:Notify{Title="Grayx Hub", Content="Script đã được tải thành công!", Duration=8}
 Window:SelectTab(1)
+
 
 
