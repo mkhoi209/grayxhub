@@ -335,9 +335,53 @@ local InfoParagraph = InfoSection:CreateParagraph("Update Info", {
 - Thêm FPS Boost / Low Graphics
 -  tính năng Auto Buy, Equip Best, Player Options
 - Config và theme đổi màu
-- thêm FPS BOOST
+- Thêm FPS BOOST
+- Thêm Graphics Quality
 ]]
 })
+-- ==========================
+-- Graphics Quality Slider
+-- ==========================
+local QualitySlider = GraphicsSection:CreateSlider("GraphicsQuality", {
+    Title = "Graphics Quality",
+    Description = "Điều chỉnh chất lượng đồ họa (0 = thấp, 10 = cao)",
+    Min = 10,
+    Max = 20,
+    Default = settings().Rendering.QualityLevel,
+    Rounding = 1
+})
+
+QualitySlider:OnChanged(function(val)
+    pcall(function()
+        settings().Rendering.QualityLevel = val
+        print("[Graphics] Quality Level set to", val)
+
+        -- Tự động bật/tắt hiệu ứng lighting nếu kéo về 0 hoặc 10
+        if val <= 1 then
+            Lighting.GlobalShadows = false
+            Lighting.Brightness = 1
+            pcall(function()
+                for _, e in pairs(Lighting:GetChildren()) do
+                    if e:IsA("BloomEffect") or e:IsA("BlurEffect") or e:IsA("SunRaysEffect")
+                       or e:IsA("ColorCorrectionEffect") then
+                        e.Enabled = false
+                    end
+                end
+            end)
+        elseif val >= 10 then
+            Lighting.GlobalShadows = true
+            Lighting.Brightness = 2
+            pcall(function()
+                for _, e in pairs(Lighting:GetChildren()) do
+                    if e:IsA("BloomEffect") or e:IsA("BlurEffect") or e:IsA("SunRaysEffect")
+                       or e:IsA("ColorCorrectionEffect") then
+                        e.Enabled = true
+                    end
+                end
+            end)
+        end
+    end)
+end)
 
 -- ==========================
 -- Settings Tab
@@ -356,6 +400,5 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 -- ==========================
 Library:Notify{Title="Grayx Hub", Content="Script đã được tải thành công!", Duration=8}
 Window:SelectTab(1)
-
 
 
