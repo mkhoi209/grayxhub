@@ -58,7 +58,7 @@ local Tabs = {
     Main = Window:CreateTab{ Title = "Main", Icon = "phosphor-users-bold" },
     Player = Window:CreateTab{ Title = "Player", Icon = "user" },
     ItemsTab = Window:CreateTab{ Title = "Items", Icon = "shopping-cart" },
-    Extra = Window:CreateTab{ Title = "Extras", Icon = "ufo" },
+    Extra = Window:CreateTab{ Title = "Extras", Icon = "crown" },
     Settings = Window:CreateTab{ Title = "Settings", Icon = "settings" }
 }
 
@@ -400,6 +400,7 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 -- ==========================
 Library:Notify{Title="Grayx Hub", Content="Script đã được tải thành công!", Duration=8}
 Window:SelectTab(1)
+
 
 
 
