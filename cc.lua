@@ -62,8 +62,71 @@ local Tabs = {
     Settings = Window:CreateTab{ Title = "Settings", Icon = "settings" }
 }
 
--- ==========================
--- Main Tab
+
+-- trong phần Main (sau khi tạo MainSection)
+local GraphicsSection = Tabs.Main:CreateSection("Graphics / FPS Boost")
+
+local LowGraphicsToggle = GraphicsSection:CreateToggle("LowGraphics", {
+    Title = "Low Graphics / Boost FPS",
+    Description = "Giảm đồ họa để tăng FPS",
+    Default = false
+})
+LowGraphicsToggle:OnChanged(function(state)
+    if state then
+        -- Tắt hiệu ứng nặng
+        for _, v in pairs(game:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") 
+               or v:IsA("Fire") or v:IsA("Sparkles") then
+                v.Enabled = false
+            end
+        end
+
+        -- Giảm chất lượng đồ họa
+        pcall(function() settings().Rendering.QualityLevel = 0 end)
+
+        -- Tắt ánh sáng / hiệu ứng hình ảnh trong Lighting
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 1e6
+        Lighting.Brightness = 1
+
+        pcall(function()
+            for _, e in pairs(Lighting:GetChildren()) do
+                if e:IsA("BloomEffect") or e:IsA("BlurEffect") or e:IsA("SunRaysEffect")
+                   or e:IsA("ColorCorrectionEffect") then
+                    e.Enabled = false
+                end
+            end
+        end)
+
+        print("[Graphics] Low Graphics ON")
+    else
+        -- Bật lại hiệu ứng
+        for _, v in pairs(game:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") 
+               or v:IsA("Fire") or v:IsA("Sparkles") then
+                v.Enabled = true
+            end
+        end
+
+        pcall(function() settings().Rendering.QualityLevel = 10 end)
+
+        Lighting.GlobalShadows = true
+        Lighting.FogEnd = 1000
+        Lighting.Brightness = 2
+
+        pcall(function()
+            for _, e in pairs(Lighting:GetChildren()) do
+                if e:IsA("BloomEffect") or e:IsA("BlurEffect") or e:IsA("SunRaysEffect")
+                   or e:IsA("ColorCorrectionEffect") then
+                    e.Enabled = true
+                end
+            end
+        end)
+
+        print("[Graphics] Low Graphics OFF")
+    end
+end)
+
 -- ==========================
 local MainSection = Tabs.Main:CreateSection("Auto Buy Plants")
 local ExtraSection = Tabs.Extra:CreateSection("Extras / Equip / FPS Boost")
