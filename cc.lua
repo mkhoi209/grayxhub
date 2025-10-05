@@ -129,7 +129,7 @@ end)
 
 -- ==========================
 local MainSection = Tabs.Main:CreateSection("Auto Buy Plants")
-local ExtraSection = Tabs.Extra:CreateSection("Extras / Equip / FPS Boost")
+local ExtraSection = Tabs.Extra:CreateSection("Extras / Equip")
 
 local Plants = {
     "Cactus Seed", "Strawberry Seed", "Pumpkin Seed", "Sunflower Seed",
@@ -400,6 +400,7 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 -- ==========================
 Library:Notify{Title="Grayx Hub", Content="Script đã được tải thành công!", Duration=8}
 Window:SelectTab(1)
+
 
 
 
