@@ -335,6 +335,7 @@ local InfoParagraph = InfoSection:CreateParagraph("Update Info", {
 - Thêm FPS Boost / Low Graphics
 -  tính năng Auto Buy, Equip Best, Player Options
 - Config và theme đổi màu
+- thêm FPS BOOST
 ]]
 })
 
@@ -355,5 +356,6 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 -- ==========================
 Library:Notify{Title="Grayx Hub", Content="Script đã được tải thành công!", Duration=8}
 Window:SelectTab(1)
+
 
 
